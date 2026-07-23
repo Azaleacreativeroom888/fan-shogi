@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日記 | 一手帳</title>
+<meta name="description" content="将棋の勉強日記。日付と気づきだけのシンプルな記録。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood:#DEC07E;
+    --wood-dark:#C9A860;
+    --frame:#3E2A1B;
+    --ink:#241a10;
+    --koma:#F6ECD9;
+    --koma-shadow:#c9a55f;
+    --shu:#a13d2b;
+    --paper:#f4efe3;
+    --paper-deep:#ece4d2;
+    --line: rgba(62,42,27,0.55);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.mincho{font-family:'Shippori Mincho', serif;}
+  a{color:inherit;}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  /* ---------- header / nav (koma pieces) ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--paper);
+    border-bottom:1px solid rgba(62,42,27,0.15);
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    max-width:1080px; margin:0 auto;
+    gap:16px;
+  }
+  .brand{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:1.5rem;
+    letter-spacing:0.12em;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .brand small{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:400;
+    font-size:0.62rem;
+    letter-spacing:0.05em;
+    color:#6b5b3f;
+  }
+
+  nav.koma-nav{display:flex; gap:14px;}
+  .koma{
+    --koma-w:58px; --koma-h:64px;
+    position:relative;
+    width:var(--koma-w); height:var(--koma-h);
+    background:linear-gradient(160deg,var(--koma) 0%, var(--koma-shadow) 130%);
+    clip-path:polygon(50% 0%, 100% 22%, 100% 100%, 0% 100%, 0% 22%);
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none;
+    box-shadow:0 2px 3px rgba(0,0,0,0.25);
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .koma span{
+    writing-mode:vertical-rl;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--frame);
+    letter-spacing:0.08em;
+  }
+  .koma.active{background:linear-gradient(160deg,#fff5df 0%, #dcb35f 130%);}
+  .koma:hover{transform:translateY(-4px) rotate(-1deg); box-shadow:0 8px 10px rgba(0,0,0,0.28);}
+
+  @media (max-width:640px){
+    .header-inner{flex-direction:column; align-items:flex-start; gap:10px;}
+    nav.koma-nav{width:100%; justify-content:space-between;}
+    .koma{--koma-w:44px; --koma-h:50px;}
+    .koma span{font-size:0.68rem;}
+  }
+
+  /* ---------- page header ---------- */
+  .page-head{
+    padding:64px 24px 40px;
+    text-align:center;
+  }
+  .page-head .eyebrow{
+    font-size:0.72rem;
+    letter-spacing:0.28em;
+    color:var(--shu);
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .page-head h1{
+    font-size:clamp(2rem, 5vw, 2.8rem);
+    font-weight:800;
+    letter-spacing:0.08em;
+    margin:0 0 14px;
+  }
+  .page-head p{
+    color:#5a4c34;
+    font-size:0.95rem;
+    max-width:440px;
+    margin:0 auto;
+  }
+
+  /* ---------- diary entries ---------- */
+  .diary{
+    max-width:640px;
+    margin:0 auto;
+    padding:0 24px 110px;
+  }
+  .entry{
+    position:relative;
+    padding:28px 0 28px 32px;
+    border-left:2px solid rgba(62,42,27,0.18);
+  }
+  .entry::before{
+    content:"";
+    position:absolute;
+    left:-7px; top:34px;
+    width:12px; height:12px;
+    background:var(--koma-shadow);
+    clip-path:polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+  }
+  .entry:first-child{padding-top:0;}
+  .entry:first-child::before{top:6px;}
+  .entry:last-child{border-left:2px solid transparent;}
+
+  .entry .date{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:0.92rem;
+    letter-spacing:0.06em;
+    color:var(--shu);
+    margin-bottom:10px;
+  }
+  .entry p{
+    margin:0;
+    font-size:0.98rem;
+    color:#332714;
+    white-space:pre-line;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    background:var(--frame);
+    color:#e9dfc6;
+    padding:64px 24px 40px;
+  }
+  .footer-grid{
+    max-width:1080px; margin:0 auto;
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px;
+  }
+  @media (max-width:760px){
+    .footer-grid{grid-template-columns:1fr; gap:40px;}
+  }
+  footer h4{
+    font-family:'Shippori Mincho', serif;
+    font-size:1rem; letter-spacing:0.1em;
+    margin:0 0 18px; color:#f6ecd9;
+  }
+  .contact-form{display:flex; flex-direction:column; gap:12px;}
+  .contact-form input, .contact-form textarea{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(233,223,198,0.28);
+    color:#f6ecd9;
+    padding:11px 13px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:0.9rem;
+    border-radius:2px;
+  }
+  .contact-form textarea{resize:vertical; min-height:100px;}
+  .contact-form button{
+    align-self:flex-start;
+    background:var(--shu);
+    color:#fff;
+    border:none;
+    padding:11px 26px;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+    cursor:pointer;
+    border-radius:2px;
+    transition:background 0.2s ease;
+  }
+  .contact-form button:hover{background:#c14c37;}
+
+  .links-list{list-style:none; padding:0; margin:0 0 30px; display:flex; flex-direction:column; gap:9px; font-size:0.9rem;}
+  .links-list a{text-decoration:none; color:#e9dfc6; border-bottom:1px solid rgba(233,223,198,0.25); padding-bottom:2px;}
+  .links-list a:hover{color:#fff; border-color:#fff;}
+
+  .ai-notice{
+    font-size:0.76rem;
+    line-height:1.8;
+    color:#c9bc9a;
+    border-top:1px solid rgba(233,223,198,0.18);
+    padding-top:24px;
+    margin-top:30px;
+  }
+  .copyright{
+    text-align:center;
+    font-size:0.74rem;
+    color:#a4977a;
+    margin-top:30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="brand">一手帳 <small>ITTE-CHŌ / 将棋勉強ノート</small></a>
+    <nav class="koma-nav">
+      <a href="index.html" class="koma"><span>盤面</span></a>
+      <a href="blog.html" class="koma active"><span>日記</span></a>
+      <a href="gallery.html" class="koma"><span>棋譜</span></a>
+      <a href="about.html" class="koma"><span>自己紹介</span></a>
+    </nav>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="eyebrow">DIARY</div>
+  <h1>日記</h1>
+  <p>定跡の研究や実戦の振り返りを、気づいたときに書き留めています。</p>
+</section>
+
+<section class="diary">
+
+  <div class="entry">
+    <div class="date">2026.07.23</div>
+    <p>矢倉の急戦を並べ直した。5七銀左急戦、思っていたより早く仕掛けられるんだな。</p>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026.07.20</div>
+    <p>三手詰を20問。集中してるときはすぐ解けるのに、疲れてると初手から見誤る。</p>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026.07.15</div>
+    <p>角換わり腰掛け銀の本を読み始めた。まずは形を覚えるところから。</p>
+  </div>
+
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4>お問い合わせ</h4>
+      <form class="contact-form" action="https://formspree.io/f/maqvpvoz" method="POST">
+        <input type="text" name="name" placeholder="お名前" required>
+        <input type="email" name="email" placeholder="メールアドレス" required>
+        <textarea name="message" placeholder="メッセージ" required></textarea>
+        <button type="submit">送信する</button>
+      </form>
+    </div>
+    <div>
+      <h4>LINKS</h4>
+      <ul class="links-list">
+        <li><a href="https://azaleacreativeroom888.github.io/" target="_blank" rel="noopener">Azalea Creative Room</a></li>
+        <li><a href="#" target="_blank" rel="noopener">Kakuyomu</a></li>
+        <li><a href="#" target="_blank" rel="noopener">Pixiv</a></li>
+        <li><a href="#" target="_blank" rel="noopener">YouTube — リリポピ</a></li>
+        <li><a href="#" target="_blank" rel="noopener">Bluesky</a></li>
+      </ul>
+      <div class="ai-notice">
+        本サイトに掲載されている文章・イラスト・図表等は、すべて作者に著作権があります。生成AIの学習データとして使用・収集することを禁止します。
+      </div>
+    </div>
+  </div>
+  <div class="copyright">© 一手帳 / Azalea Creative Room</div>
+</footer>
+
+</body>
+</html>
