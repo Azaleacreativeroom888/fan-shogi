@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>将棋用語辞書 | 一手帳</title>
+<meta name="description" content="将棋の基本用語をまとめた辞書。用語と意味だけのシンプルなリスト。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood:#DEC07E;
+    --wood-dark:#C9A860;
+    --frame:#3E2A1B;
+    --ink:#241a10;
+    --koma:#F6ECD9;
+    --koma-shadow:#c9a55f;
+    --shu:#a13d2b;
+    --paper:#f4efe3;
+    --paper-deep:#ece4d2;
+    --line: rgba(62,42,27,0.55);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.mincho{font-family:'Shippori Mincho', serif;}
+  a{color:inherit;}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  /* ---------- header / nav (koma pieces) ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--paper);
+    border-bottom:1px solid rgba(62,42,27,0.15);
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    max-width:1080px; margin:0 auto;
+    gap:16px;
+  }
+  .brand{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:1.5rem;
+    letter-spacing:0.12em;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .brand small{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:400;
+    font-size:0.62rem;
+    letter-spacing:0.05em;
+    color:#6b5b3f;
+  }
+
+  nav.koma-nav{display:flex; gap:14px;}
+  .koma{
+    --koma-w:58px; --koma-h:64px;
+    position:relative;
+    width:var(--koma-w); height:var(--koma-h);
+    background:linear-gradient(160deg,var(--koma) 0%, var(--koma-shadow) 130%);
+    clip-path:polygon(50% 0%, 100% 22%, 100% 100%, 0% 100%, 0% 22%);
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none;
+    box-shadow:0 2px 3px rgba(0,0,0,0.25);
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .koma span{
+    writing-mode:vertical-rl;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--frame);
+    letter-spacing:0.08em;
+  }
+  .koma.active{background:linear-gradient(160deg,#fff5df 0%, #dcb35f 130%);}
+  .koma:hover{transform:translateY(-4px) rotate(-1deg); box-shadow:0 8px 10px rgba(0,0,0,0.28);}
+
+  @media (max-width:640px){
+    .header-inner{flex-direction:column; align-items:flex-start; gap:10px;}
+    nav.koma-nav{width:100%; justify-content:space-between;}
+    .koma{--koma-w:44px; --koma-h:50px;}
+    .koma span{font-size:0.68rem;}
+  }
+
+  /* ---------- page header ---------- */
+  .page-head{
+    padding:64px 24px 40px;
+    text-align:center;
+  }
+  .page-head .eyebrow{
+    font-size:0.72rem;
+    letter-spacing:0.28em;
+    color:var(--shu);
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .page-head h1{
+    font-size:clamp(2rem, 5vw, 2.8rem);
+    font-weight:800;
+    letter-spacing:0.08em;
+    margin:0 0 14px;
+  }
+  .page-head p{
+    color:#5a4c34;
+    font-size:0.95rem;
+    max-width:460px;
+    margin:0 auto;
+  }
+
+  /* ---------- dictionary list ---------- */
+  .dict{
+    max-width:680px;
+    margin:0 auto;
+    padding:0 24px 60px;
+  }
+  .term{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:20px;
+    padding:22px 0;
+    border-bottom:1px solid rgba(62,42,27,0.14);
+  }
+  .term:first-child{padding-top:0;}
+  .term:last-child{border-bottom:none;}
+  @media (max-width:520px){
+    .term{grid-template-columns:1fr; gap:6px;}
+  }
+  .term dt{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:1.05rem;
+    color:var(--ink);
+    margin:0;
+  }
+  .term dt .kana{
+    display:block;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:400;
+    font-size:0.7rem;
+    color:var(--shu);
+    letter-spacing:0.08em;
+    margin-top:4px;
+  }
+  .term dd{
+    margin:0;
+    font-size:0.92rem;
+    color:#3a2e1a;
+  }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px;
+    max-width:680px;
+    margin:0 auto;
+    padding:9px 18px;
+    text-decoration:none;
+    color:#7a6a4a;
+    font-size:0.85rem;
+    border:1px solid rgba(62,42,27,0.2);
+    letter-spacing:0.04em;
+    transition:all 0.2s ease;
+  }
+  .back-link:hover{
+    color:var(--shu);
+    border-color:var(--shu);
+    background:rgba(161,61,43,0.06);
+  }
+  .back-wrap{
+    max-width:680px;
+    margin:0 auto;
+    padding:0 24px 100px;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    background:var(--frame);
+    color:#e9dfc6;
+    padding:64px 24px 40px;
+  }
+  .footer-grid{
+    max-width:1080px; margin:0 auto;
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px;
+  }
+  @media (max-width:760px){
+    .footer-grid{grid-template-columns:1fr; gap:40px;}
+  }
+  footer h4{
+    font-family:'Shippori Mincho', serif;
+    font-size:1rem; letter-spacing:0.1em;
+    margin:0 0 18px; color:#f6ecd9;
+  }
+  .contact-form{display:flex; flex-direction:column; gap:12px;}
+  .contact-form input, .contact-form textarea{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(233,223,198,0.28);
+    color:#f6ecd9;
+    padding:11px 13px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:0.9rem;
+    border-radius:2px;
+  }
+  .contact-form textarea{resize:vertical; min-height:100px;}
+  .contact-form button{
+    align-self:flex-start;
+    background:var(--shu);
+    color:#fff;
+    border:none;
+    padding:11px 26px;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+    cursor:pointer;
+    border-radius:2px;
+    transition:background 0.2s ease;
+  }
+  .contact-form button:hover{background:#c14c37;}
+
+  .links-list{list-style:none; padding:0; margin:0 0 30px; display:flex; flex-direction:column; gap:9px; font-size:0.9rem;}
+  .links-list a{text-decoration:none; color:#e9dfc6; border-bottom:1px solid rgba(233,223,198,0.25); padding-bottom:2px;}
+  .links-list a:hover{color:#fff; border-color:#fff;}
+
+  .ai-notice{
+    font-size:0.76rem;
+    line-height:1.8;
+    color:#c9bc9a;
+    border-top:1px solid rgba(233,223,198,0.18);
+    padding-top:24px;
+    margin-top:30px;
+  }
+  .copyright{
+    text-align:center;
+    font-size:0.74rem;
+    color:#a4977a;
+    margin-top:30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="brand">一手帳 <small>ITTE-CHŌ / 将棋勉強ノート</small></a>
+    <nav class="koma-nav">
+      <a href="index.html" class="koma"><span>盤面</span></a>
+      <a href="blog.html" class="koma"><span>日記</span></a>
+      <a href="gallery.html" class="koma"><span>棋譜</span></a>
+      <a href="about.html" class="koma"><span>自己紹介</span></a>
+    </nav>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="eyebrow">DICTIONARY</div>
+  <h1>将棋用語辞書</h1>
+  <p>このサイトや棋譜でよく出てくる基本用語をまとめました。</p>
+</section>
+
+<dl class="dict">
+
+  <div class="term">
+    <dt>歩<span class="kana">ふ</span></dt>
+    <dd>最も数が多い駒。前に一マスずつしか進めないが、成ると「と金」になる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>角<span class="kana">かく</span></dt>
+    <dd>斜めにどこまでも進める駒。成ると「馬」になり、縦横にも一マス動けるようになる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>飛車<span class="kana">ひしゃ</span></dt>
+    <dd>縦横にどこまでも進める駒。成ると「龍」になり、斜めにも一マス動けるようになる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>王将・玉将<span class="kana">おうしょう・ぎょくしょう</span></dt>
+    <dd>取られると負けになる最も重要な駒。先手が王将、後手が玉将を使うことが多い。</dd>
+  </div>
+
+  <div class="term">
+    <dt>金将<span class="kana">きんしょう</span></dt>
+    <dd>斜め後ろ以外の6方向に一マス進める駒。玉の守りの要になる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>銀将<span class="kana">ぎんしょう</span></dt>
+    <dd>前と斜め4方向に一マス進める駒。攻めにも守りにも使われる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>桂馬<span class="kana">けいま</span></dt>
+    <dd>前方に二マス、横に一マス移動する、他の駒を飛び越えられる唯一の駒。</dd>
+  </div>
+
+  <div class="term">
+    <dt>香車<span class="kana">きょうしゃ</span></dt>
+    <dd>前方にどこまでも進める駒。ただし後ろには戻れない。</dd>
+  </div>
+
+  <div class="term">
+    <dt>成る<span class="kana">なる</span></dt>
+    <dd>駒が敵陣(相手側の3段目以内)に入ったときに裏返し、動ける範囲を広げること。</dd>
+  </div>
+
+  <div class="term">
+    <dt>王手<span class="kana">おうて</span></dt>
+    <dd>相手の玉を直接取れる状態にする手。王手をかけられたら必ず対応しなければならない。</dd>
+  </div>
+
+  <div class="term">
+    <dt>詰み<span class="kana">つみ</span></dt>
+    <dd>王手を受けても逃げ場がなく、どうやっても玉が取られてしまう状態。ゲーム終了。</dd>
+  </div>
+
+  <div class="term">
+    <dt>持ち駒<span class="kana">もちごま</span></dt>
+    <dd>相手から取った駒。自分の手番のときに盤上の空いているマスへ打つことができる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>定跡<span class="kana">じょうせき</span></dt>
+    <dd>長年の研究によって「良い」とされている決まった指し方の型。序盤でよく使われる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>棒銀<span class="kana">ぼうぎん</span></dt>
+    <dd>銀を一直線に前進させて攻める戦法。仕掛けがわかりやすく初心者にも人気。</dd>
+  </div>
+
+  <div class="term">
+    <dt>矢倉<span class="kana">やぐら</span></dt>
+    <dd>金銀を積み上げて玉を堅く囲う代表的な囲い方のひとつ。</dd>
+  </div>
+
+  <div class="term">
+    <dt>二歩<span class="kana">にふ</span></dt>
+    <dd>同じ列に自分の歩を2枚置いてしまう反則。持ち駒の歩を打つときに注意が必要。</dd>
+  </div>
+
+  <div class="term">
+    <dt>千日手<span class="kana">せんにちて</span></dt>
+    <dd>同じ局面が4回繰り返されること。この場合、指し直しになる。</dd>
+  </div>
+
+  <div class="term">
+    <dt>序盤・中盤・終盤<span class="kana">じょばん・ちゅうばん・しゅうばん</span></dt>
+    <dd>対局の流れを分けた呼び方。駒組みの序盤、攻防の中盤、寄せ合いの終盤。</dd>
+  </div>
+
+</dl>
+
+<div class="back-wrap">
+  <a class="back-link" href="gallery.html">← ギャラリーに戻る</a>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4>お問い合わせ</h4>
+      <form class="contact-form" action="https://formspree.io/f/maqvpvoz" method="POST">
+        <input type="text" name="name" placeholder="お名前" required>
+        <input type="email" name="email" placeholder="メールアドレス" required>
+        <textarea name="message" placeholder="メッセージ" required></textarea>
+        <button type="submit">送信する</button>
+      </form>
+    </div>
+    <div>
+      <h4>LINKS</h4>
+      <ul class="links-list">
+        <li><a href="https://azaleacreativeroom888.github.io/" target="_blank" rel="noopener">Azalea Creative Room</a></li>
+        <li><a href="https://kakuyomu.jp/users/azalea_azalea72" target="_blank" rel="noopener">Kakuyomu</a></li>
+        <li><a href="https://www.pixiv.net/users/105728284" target="_blank" rel="noopener">Pixiv</a></li>
+        <li><a href="https://www.youtube.com/@LilyPopins0512" target="_blank" rel="noopener">YouTube — リリポピ</a></li>
+        <li><a href="https://bsky.app/profile/azaleaazalea88.bsky.social" target="_blank" rel="noopener">Bluesky</a></li>
+      </ul>
+      <div class="ai-notice">
+        本サイトに掲載されている文章・イラスト・図表等は、すべて作者に著作権があります。生成AIの学習データとして使用・収集することを禁止します。
+      </div>
+    </div>
+  </div>
+  <div class="copyright">© 一手帳 / Azalea Creative Room</div>
+</footer>
+
+</body>
+</html>
