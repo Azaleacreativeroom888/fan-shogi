@@ -246,6 +246,78 @@
     line-height:1;
   }
 
+  /* ---------- dictionary link box ---------- */
+  .dict-box{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 24px 100px;
+  }
+  .dict-card{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    background:linear-gradient(150deg, var(--wood) 0%, var(--wood-dark) 100%);
+    border:1px solid rgba(62,42,27,0.2);
+    padding:30px 32px;
+    text-decoration:none;
+    color:var(--ink);
+    position:relative;
+    overflow:hidden;
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dict-card::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100% / 9)),
+      repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100% / 9));
+    opacity:0.35;
+  }
+  .dict-card:hover{transform:translateY(-4px); box-shadow:0 16px 28px rgba(36,26,16,0.22);}
+  .dict-mark{
+    position:relative; z-index:1;
+    flex-shrink:0;
+    width:64px; height:70px;
+    background:linear-gradient(160deg,var(--koma) 0%, var(--koma-shadow) 130%);
+    clip-path:polygon(50% 0%, 100% 22%, 100% 100%, 0% 100%, 0% 22%);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:1.5rem;
+    color:var(--frame);
+    box-shadow:0 4px 8px rgba(0,0,0,0.28);
+  }
+  .dict-text{position:relative; z-index:1; flex:1;}
+  .dict-text .eyebrow{
+    font-size:0.68rem;
+    letter-spacing:0.24em;
+    color:var(--shu);
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .dict-text h3{
+    font-size:1.15rem;
+    margin:0 0 6px;
+    letter-spacing:0.04em;
+  }
+  .dict-text p{
+    margin:0;
+    font-size:0.88rem;
+    color:#453824;
+  }
+  .dict-arrow{
+    position:relative; z-index:1;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:0.85rem;
+    color:var(--frame);
+    flex-shrink:0;
+  }
+  @media (max-width:560px){
+    .dict-card{flex-wrap:wrap; padding:24px;}
+    .dict-arrow{display:none;}
+  }
+
   /* ---------- footer ---------- */
   footer{
     background:var(--frame);
@@ -382,6 +454,18 @@
 
 </div>
 
+<div class="dict-box">
+  <a class="dict-card" href="dictionary.html">
+    <div class="dict-mark">辞</div>
+    <div class="dict-text">
+      <div class="eyebrow">DICTIONARY</div>
+      <h3>将棋用語辞書</h3>
+      <p>棋譜やこのページで出てくる用語がわからないときはこちらで確認できます。</p>
+    </div>
+    <div class="dict-arrow">見る →</div>
+  </a>
+</div>
+
 <div class="lightbox" id="lightbox">
   <div class="lightbox-inner">
     <div class="lightbox-image"><span id="lb-piece">王</span></div>
@@ -409,10 +493,10 @@
       <h4>LINKS</h4>
       <ul class="links-list">
         <li><a href="https://azaleacreativeroom888.github.io/" target="_blank" rel="noopener">Azalea Creative Room</a></li>
-        <li><a href="#" target="_blank" rel="noopener">Kakuyomu</a></li>
-        <li><a href="#" target="_blank" rel="noopener">Pixiv</a></li>
-        <li><a href="#" target="_blank" rel="noopener">YouTube — リリポピ</a></li>
-        <li><a href="#" target="_blank" rel="noopener">Bluesky</a></li>
+        <li><a href="https://kakuyomu.jp/users/azalea_azalea72" target="_blank" rel="noopener">Kakuyomu</a></li>
+        <li><a href="https://www.pixiv.net/users/105728284" target="_blank" rel="noopener">Pixiv</a></li>
+        <li><a href="https://www.youtube.com/@LilyPopins0512" target="_blank" rel="noopener">YouTube — リリポピ</a></li>
+        <li><a href="https://bsky.app/profile/azaleaazalea88.bsky.social" target="_blank" rel="noopener">Bluesky</a></li>
       </ul>
       <div class="ai-notice">
         本サイトに掲載されている文章・イラスト・図表等は、すべて作者に著作権があります。生成AIの学習データとして使用・収集することを禁止します。
