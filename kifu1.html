@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>棋譜ビューア | 一手帳</title>
+<meta name="description" content="将棋盤の上で一手ずつ進めながら棋譜を見られるページ。">
+<meta name="robots" content="noai, noimageai">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood:#DEC07E;
+    --wood-dark:#C9A860;
+    --frame:#3E2A1B;
+    --ink:#241a10;
+    --koma:#F6ECD9;
+    --koma-shadow:#c9a55f;
+    --shu:#a13d2b;
+    --paper:#f4efe3;
+    --paper-deep:#ece4d2;
+    --line: rgba(62,42,27,0.55);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.mincho{font-family:'Shippori Mincho', serif;}
+  a{color:inherit;}
+  a:focus-visible, button:focus-visible, input:focus-visible{ outline:3px solid var(--shu); outline-offset:3px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  }
+
+  /* ---------- header / nav (koma pieces) ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--paper);
+    border-bottom:1px solid rgba(62,42,27,0.15);
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    max-width:1080px; margin:0 auto;
+    gap:16px;
+  }
+  .brand{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:1.5rem;
+    letter-spacing:0.12em;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .brand small{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:400;
+    font-size:0.62rem;
+    letter-spacing:0.05em;
+    color:#6b5b3f;
+  }
+  nav.koma-nav{display:flex; gap:14px;}
+  .koma{
+    --koma-w:58px; --koma-h:64px;
+    position:relative;
+    width:var(--koma-w); height:var(--koma-h);
+    background:linear-gradient(160deg,var(--koma) 0%, var(--koma-shadow) 130%);
+    clip-path:polygon(50% 0%, 100% 22%, 100% 100%, 0% 100%, 0% 22%);
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none;
+    box-shadow:0 2px 3px rgba(0,0,0,0.25);
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .koma span{
+    writing-mode:vertical-rl;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--frame);
+    letter-spacing:0.08em;
+  }
+  .koma.active{background:linear-gradient(160deg,#fff5df 0%, #dcb35f 130%);}
+  .koma:hover{transform:translateY(-4px) rotate(-1deg); box-shadow:0 8px 10px rgba(0,0,0,0.28);}
+  @media (max-width:640px){
+    .header-inner{flex-direction:column; align-items:flex-start; gap:10px;}
+    nav.koma-nav{width:100%; justify-content:space-between;}
+    .koma{--koma-w:44px; --koma-h:50px;}
+    .koma span{font-size:0.68rem;}
+  }
+
+  /* ---------- page hero ---------- */
+  .page-hero{ padding:56px 24px 28px; text-align:center; }
+  .crumb{ font-size:0.82rem; color:#7a6a4a; margin:0 0 14px; }
+  .crumb a{ color:var(--shu); font-weight:700; text-decoration:none; }
+  .crumb a:hover{ text-decoration:underline; }
+  .page-hero .eyebrow{
+    font-size:0.72rem; letter-spacing:0.28em; color:var(--shu); font-weight:700; margin-bottom:12px;
+  }
+  .page-hero h1{
+    font-size:clamp(1.7rem, 4vw, 2.4rem);
+    font-weight:800; letter-spacing:0.06em; margin:0 0 12px;
+  }
+  .game-meta{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:4px 22px;
+    font-size:0.88rem; color:#5a4c34;
+  }
+  .game-meta b{ color:var(--frame); font-weight:700; }
+
+  /* ---------- viewer ---------- */
+  .viewer{ max-width:1080px; margin:0 auto; padding:10px 24px 60px; }
+  .viewer-grid{
+    display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,0.75fr);
+    gap:30px; align-items:start;
+  }
+  @media (max-width:860px){ .viewer-grid{ grid-template-columns:1fr; } }
+
+  .board-col{ display:flex; flex-direction:column; gap:10px; }
+  .board-frame{
+    border:8px solid var(--frame);
+    box-shadow:0 18px 40px rgba(36,26,16,0.3);
+    line-height:0;
+  }
+  .board-frame svg{ width:100%; height:auto; display:block; }
+
+  .hand{
+    display:flex; align-items:center; gap:14px; min-height:52px;
+    padding:6px 14px;
+    background:var(--paper-deep);
+    border:1px solid rgba(62,42,27,0.14);
+  }
+  .hand-label{
+    font-family:'Shippori Mincho', serif; font-weight:700; font-size:0.82rem;
+    color:var(--frame); white-space:nowrap;
+  }
+  .hand-pieces{ display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; }
+  .hk-item{ display:inline-flex; align-items:center; gap:4px; }
+  .hk{
+    width:30px; height:33px;
+    background:linear-gradient(160deg,var(--koma) 0%, var(--koma-shadow) 130%);
+    clip-path:polygon(50% 0%, 100% 24%, 100% 100%, 0% 100%, 0% 24%);
+    display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px;
+    font-family:'Shippori Mincho', serif; font-weight:800; font-size:0.95rem; color:var(--frame);
+  }
+  .hk-n{ font-size:0.78rem; color:#5a4c34; font-weight:700; }
+  .hand-none{ font-size:0.78rem; color:#7a6a4a; }
+
+  .side{ display:flex; flex-direction:column; gap:16px; }
+  .panel{
+    background:var(--paper-deep);
+    border:1px solid rgba(62,42,27,0.14);
+    padding:18px 20px;
+  }
+  .panel h2{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:0.72rem; letter-spacing:0.22em; color:var(--shu); font-weight:700; margin:0 0 10px;
+  }
+  .now{ font-family:'Shippori Mincho', serif; font-size:1.2rem; font-weight:700; color:var(--frame); min-height:1.9em; }
+  .caps{ font-size:0.8rem; color:#7a6a4a; margin-top:4px; }
+  .comment{ font-size:0.9rem; min-height:3.6em; margin:0; color:#3a2e1a; }
+  .comment.empty{ color:#7a6a4a; }
+
+  .controls{ display:flex; gap:8px; }
+  .ctl{
+    flex:1; min-width:48px;
+    font-family:inherit; font-size:1rem; font-weight:700;
+    padding:10px 0;
+    border:1.5px solid rgba(62,42,27,0.25);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--frame);
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .ctl:hover:not(:disabled){ background:var(--frame); color:var(--paper); border-color:var(--frame); }
+  .ctl.main{ background:var(--shu); border-color:var(--shu); color:#fff; }
+  .ctl.main:hover:not(:disabled){ background:#c14c37; border-color:#c14c37; }
+  .ctl:disabled{ opacity:0.4; cursor:not-allowed; }
+  .slider-row{ margin-top:14px; display:flex; align-items:center; gap:12px; font-size:0.8rem; color:#7a6a4a; }
+  .slider-row input[type=range]{ flex:1; accent-color:var(--shu); }
+  .hint{ font-size:0.74rem; color:#7a6a4a; margin:10px 0 0; }
+
+  .movelist{ display:flex; flex-wrap:wrap; gap:6px; max-height:220px; overflow-y:auto; }
+  .mv{
+    font-family:inherit; font-size:0.76rem;
+    padding:4px 10px; border-radius:2px;
+    border:1px solid rgba(62,42,27,0.18);
+    background:var(--paper); color:var(--ink);
+    cursor:pointer;
+  }
+  .mv.b{ border-left:6px solid var(--frame); }
+  .mv.w{ border-left:6px solid var(--koma-shadow); }
+  .mv:hover{ background:var(--koma); }
+  .mv.active{ background:var(--frame); color:var(--paper); border-color:var(--frame); }
+
+  /* ---------- other games ---------- */
+  .others{ max-width:1080px; margin:0 auto; padding:0 24px 100px; }
+  .others h2{ font-size:1.2rem; margin:0 0 6px; }
+  .others p{ font-size:0.86rem; color:#5a4c34; margin:0 0 16px; }
+  .others p a{ color:var(--shu); font-weight:700; }
+  .other-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .other{
+    display:block; position:relative;
+    background:var(--paper-deep);
+    border:1px solid rgba(62,42,27,0.14);
+    padding:14px 18px;
+    text-decoration:none; color:var(--ink);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .other::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--shu); }
+  .other:hover{ transform:translateY(-3px); box-shadow:0 10px 18px rgba(36,26,16,0.14); }
+  .other.now-playing{ border-color:var(--shu); }
+  .other b{ display:block; font-family:'Shippori Mincho', serif; font-size:0.98rem; }
+  .other span{ font-size:0.76rem; color:#7a6a4a; }
+
+  /* ---------- footer ---------- */
+  footer{
+    background:var(--frame);
+    color:#e9dfc6;
+    padding:64px 24px 40px;
+  }
+  .footer-grid{
+    max-width:1080px; margin:0 auto;
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px;
+  }
+  @media (max-width:760px){
+    .footer-grid{grid-template-columns:1fr; gap:40px;}
+  }
+  footer h4{
+    font-family:'Shippori Mincho', serif;
+    font-size:1rem; letter-spacing:0.1em;
+    margin:0 0 18px; color:#f6ecd9;
+  }
+  .contact-form{display:flex; flex-direction:column; gap:12px;}
+  .contact-form input, .contact-form textarea{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(233,223,198,0.28);
+    color:#f6ecd9;
+    padding:11px 13px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:0.9rem;
+    border-radius:2px;
+  }
+  .contact-form textarea{resize:vertical; min-height:100px;}
+  .contact-form button{
+    align-self:flex-start;
+    background:var(--shu);
+    color:#fff;
+    border:none;
+    padding:11px 26px;
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+    cursor:pointer;
+    border-radius:2px;
+    transition:background 0.2s ease;
+  }
+  .contact-form button:hover{background:#c14c37;}
+  .links-list{list-style:none; padding:0; margin:0 0 30px; display:flex; flex-direction:column; gap:9px; font-size:0.9rem;}
+  .links-list a{text-decoration:none; color:#e9dfc6; border-bottom:1px solid rgba(233,223,198,0.25); padding-bottom:2px;}
+  .links-list a:hover{color:#fff; border-color:#fff;}
+  .ai-notice{
+    font-size:0.76rem;
+    line-height:1.8;
+    color:#c9bc9a;
+    border-top:1px solid rgba(233,223,198,0.18);
+    padding-top:24px;
+    margin-top:30px;
+  }
+  .copyright{
+    text-align:center;
+    font-size:0.74rem;
+    color:#a4977a;
+    margin-top:30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="brand">一手帳 <small>ITTE-CHŌ / 将棋勉強ノート</small></a>
+    <nav class="koma-nav">
+      <a href="index.html" class="koma"><span>盤面</span></a>
+      <a href="blog.html" class="koma"><span>日記</span></a>
+      <a href="gallery.html" class="koma active"><span>棋譜</span></a>
+      <a href="about.html" class="koma"><span>自己紹介</span></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <p class="crumb"><a href="gallery.html">ギャラリー</a> ／ <a href="kifu.html">棋譜一覧</a></p>
+    <div class="eyebrow">KIFU VIEWER</div>
+    <h1 id="gameTitle">棋譜ビューア</h1>
+    <div class="game-meta" id="gameMeta"></div>
+  </section>
+
+  <section class="viewer">
+    <div class="viewer-grid">
+
+      <div class="board-col">
+        <div class="hand" id="handTop"></div>
+        <div class="board-frame" id="boardWrap" aria-live="polite"></div>
+        <div class="hand" id="handBottom"></div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <h2>NOW</h2>
+          <div class="now" id="nowText"></div>
+          <div class="caps" id="capsText"></div>
+        </div>
+
+        <div class="panel">
+          <h2>COMMENT</h2>
+          <p class="comment" id="commentText"></p>
+        </div>
+
+        <div class="panel">
+          <h2>CONTROL</h2>
+          <div class="controls">
+            <button class="ctl" id="btnFirst" aria-label="最初へ">⏮</button>
+            <button class="ctl" id="btnPrev" aria-label="一手戻る">◀</button>
+            <button class="ctl main" id="btnNext" aria-label="一手進む">▶</button>
+            <button class="ctl" id="btnLast" aria-label="最後へ">⏭</button>
+          </div>
+          <div class="slider-row">
+            <span>0</span>
+            <input type="range" id="slider" min="0" value="0" aria-label="手数">
+            <span id="sliderMax"></span>
+          </div>
+          <p class="hint">キーボードの ← → でも進められます（Home / End で最初・最後）。</p>
+        </div>
+
+        <div class="panel">
+          <h2>MOVES</h2>
+          <div class="movelist" id="moveList"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="others">
+    <h2>ほかの棋譜</h2>
+    <p><a href="kifu.html">棋譜一覧ページ</a>からもまとめて見られます。</p>
+    <div class="other-list" id="otherList"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4>お問い合わせ</h4>
+      <form class="contact-form" action="https://formspree.io/f/maqvpvoz" method="POST">
+        <input type="text" name="name" placeholder="お名前" required>
+        <input type="email" name="email" placeholder="メールアドレス" required>
+        <textarea name="message" placeholder="メッセージ" required></textarea>
+        <button type="submit">送信する</button>
+      </form>
+    </div>
+    <div>
+      <h4>LINKS</h4>
+      <ul class="links-list">
+        <li><a href="https://azaleacreativeroom888.github.io/" target="_blank" rel="noopener">Azalea Creative Room</a></li>
+        <li><a href="https://kakuyomu.jp/users/azalea_azalea72" target="_blank" rel="noopener">Kakuyomu</a></li>
+        <li><a href="https://www.pixiv.net/users/105728284" target="_blank" rel="noopener">Pixiv</a></li>
+        <li><a href="https://www.youtube.com/@LilyPopins0512" target="_blank" rel="noopener">YouTube — リリポピ</a></li>
+        <li><a href="https://bsky.app/profile/azaleaazalea88.bsky.social" target="_blank" rel="noopener">Bluesky</a></li>
+      </ul>
+      <div class="ai-notice">
+        本サイトに掲載されている文章・イラスト・図表等は、すべて作者に著作権があります。生成AIの学習データとして使用・収集することを禁止します。
+      </div>
+    </div>
+  </div>
+  <div class="copyright">© 一手帳 / Azalea Creative Room</div>
+</footer>
+
+<script>
+/* =========================================================
+   棋譜データ
+   - moves は「元の筋と段 → 移動先の筋と段」を数字4桁で並べる
+       ▲７六歩(77) → "7776"   △３四歩(33) → "3334"
+       成るときは末尾に + を付ける  例: ２二角成(88) → "8822+"
+     （KIF形式の「７六歩(77)」の ７六 と (77) をそのまま数字にした形）
+   - 持ち駒を打つときは 駒の英字 + * + 打つ場所
+       P=歩 L=香 N=桂 S=銀 G=金 B=角 R=飛   例: 歩を５五に打つ → "P*55"
+   - 先手（▲）から交互に指した扱い。平手（駒落ちなし）の初期配置から始まる
+   - comments は { 手数: "コメント" } で任意に追加
+   - 1局1ファイル方式：新しい棋譜を増やすときは、このファイルをまるごと
+     コピーして kifu2.html のような名前で保存し、GAME の中身を書き換える。
+     そのあと OTHERS にも新しい棋譜を追記する（全ての kifu*.html で揃えること）。
+     kifu.html の棋譜一覧にもカードを1つ足す。
+   ========================================================= */
+const GAME = {
+  title: "サンプル：平手の練習対局",
+  date: "2026.10.23",
+  black: "自分",
+  white: "相手",
+  result: "（サンプルなので未記入）",
+  moves: "7776 3334 2726 8384 2625 8485 6978 4132 2524 2324 2824 8586 8786 8286 2434 2288+ 7988 3122 3436 8684".split(" "),
+  comments: {
+    1: "先手の初手は▲７六歩。角道を開ける定番の一手。",
+    2: "後手も△３四歩で角道を開ける。",
+    3: "▲２六歩で飛車先の歩を突く。",
+    11: "▲同飛。飛車先の歩を交換して、飛車が敵陣に迫る。",
+    15: "▲３四飛。「横歩」（３四の歩）を取る。これが横歩取りの名前の由来。",
+    16: "△８八角成。角を交換して馬を作る。",
+    20: "サンプルはここまで。実際の棋譜に差し替えてね。"
+  }
+};
+
+/* 「ほかの棋譜」欄に出す一覧。棋譜を増やしたら、このファイルも含めて
+   全部の kifu*.html の OTHERS を同じ内容に揃えてね。
+   href には自分自身も入れてOK（自動でハイライトされる）。 */
+const OTHERS = [
+  { href: "kifu1.html", title: "サンプル：平手の練習対局", date: "2026.10.23", moves: 20 }
+];
+
+/* ---------------- 以下、ビューアの処理 ---------------- */
+const game = GAME;
+const $ = id => document.getElementById(id);
+
+const MARK = ["▲", "△"];
+const FW = "１２３４５６７８９";
+const KJ = "一二三四五六七八九";
+const NAME = {P:"歩", L:"香", N:"桂", S:"銀", G:"金", B:"角", R:"飛"};
+const PNAME = {P:"と", L:"杏", N:"圭", S:"全", B:"馬", R:"龍"};
+const ORDER = ["R", "B", "G", "S", "N", "L", "P"];
+
+let step = 0;
+
+function pieceName(p){
+  if (p.t === "K") return p.c === 0 ? "王" : "玉";
+  return p.p ? PNAME[p.t] : NAME[p.t];
+}
+
+/* 盤は board[段-1][9-筋]。左上が９一、右下が１九。c: 0=先手 / 1=後手 */
+function initialBoard(){
+  const b = Array.from({length:9}, () => Array(9).fill(null));
+  const back = ["L","N","S","G","K","G","S","N","L"];
+  for (let x = 0; x < 9; x++){
+    b[0][x] = {t:back[x], c:1, p:false};
+    b[2][x] = {t:"P", c:1, p:false};
+    b[6][x] = {t:"P", c:0, p:false};
+    b[8][x] = {t:back[x], c:0, p:false};
+  }
+  b[1][1] = {t:"R", c:1, p:false}; // ８二飛
+  b[1][7] = {t:"B", c:1, p:false}; // ２二角
+  b[7][7] = {t:"R", c:0, p:false}; // ２八飛
+  b[7][1] = {t:"B", c:0, p:false}; // ８八角
+  return b;
+}
+
+function parseTok(tok){
+  let m = /^([PLNSGBR])\*([1-9])([1-9])$/.exec(tok || "");
+  if (m) return {drop:true, t:m[1], tx:+m[2], ty:+m[3]};
+  m = /^([1-9])([1-9])([1-9])([1-9])(\+?)$/.exec(tok || "");
+  if (m) return {drop:false, fx:+m[1], fy:+m[2], tx:+m[3], ty:+m[4], promote:m[5] === "+"};
+  return null;
+}
+
+function play(upto){
+  const board = initialBoard();
+  const hands = [0, 1].map(() => ({R:0, B:0, G:0, S:0, N:0, L:0, P:0}));
+  const labels = [];
+  let last = null, prev = null;
+  for (let i = 0; i < upto; i++){
+    const c = i % 2;
+    const mv = parseTok(game.moves[i]);
+    if (!mv){ labels.push(MARK[c] + "？"); last = null; prev = null; continue; }
+    const tx = 9 - mv.tx, ty = mv.ty - 1;
+    const same = prev && prev.tx === mv.tx && prev.ty === mv.ty;
+    const dest = same ? "同" : FW[mv.tx - 1] + KJ[mv.ty - 1];
+    if (mv.drop){
+      board[ty][tx] = {t:mv.t, c, p:false};
+      hands[c][mv.t] = Math.max(0, hands[c][mv.t] - 1);
+      labels.push(MARK[c] + dest + NAME[mv.t] + "打");
+    } else {
+      const fx = 9 - mv.fx, fy = mv.fy - 1;
+      const pc = board[fy][fx];
+      if (!pc){ labels.push(MARK[c] + dest + "？"); last = null; prev = mv; continue; }
+      const target = board[ty][tx];
+      if (target && target.t !== "K") hands[c][target.t]++;
+      const promo = mv.promote && !pc.p && PNAME[pc.t] !== undefined;
+      labels.push(MARK[c] + dest + pieceName(pc) + (promo ? "成" : "") + "(" + mv.fx + mv.fy + ")");
+      if (promo) pc.p = true;
+      board[ty][tx] = pc;
+      board[fy][fx] = null;
+    }
+    last = {x:tx, y:ty};
+    prev = mv;
+  }
+  return {board, hands, labels, last};
+}
+
+const LABELS = play(game.moves.length).labels;
+
+function pieceSVG(pc, cx, cy, cell){
+  const pts = [[0,-0.46],[0.34,-0.27],[0.40,0.46],[-0.40,0.46],[-0.34,-0.27]]
+    .map(([a, b]) => (a*cell).toFixed(1) + "," + (b*cell).toFixed(1)).join(" ");
+  const rot = pc.c === 1 ? " rotate(180)" : "";
+  const color = pc.p ? "#a13d2b" : "#3E2A1B";
+  return `<g transform="translate(${cx},${cy})${rot}">` +
+    `<polygon points="${pts}" fill="url(#komaGrad)" stroke="#a88a4d" stroke-width="1.2" stroke-linejoin="round"/>` +
+    `<text x="0" y="${(cell*0.18).toFixed(1)}" font-size="${(cell*0.44).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${color}" font-family="Shippori Mincho, serif">${pieceName(pc)}</text>` +
+    `</g>`;
+}
+
+function handHTML(c, h){
+  const items = ORDER.filter(t => h[t] > 0).map(t =>
+    `<span class="hk-item"><span class="hk">${NAME[t]}</span>${h[t] > 1 ? `<span class="hk-n">×${h[t]}</span>` : ""}</span>`
+  ).join("");
+  return `<span class="hand-label">${MARK[c]} ${c === 0 ? "先手" : "後手"}　持ち駒</span>` +
+    `<div class="hand-pieces">${items || '<span class="hand-none">なし</span>'}</div>`;
+}
+
+function draw(){
+  const cell = 52, m = 30, size = m*2 + cell*9;
+  const pos = play(step);
+  let s = `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${step}手目の局面">`;
+  s += `<defs>` +
+    `<linearGradient id="woodGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#DEC07E"/><stop offset="1" stop-color="#C9A860"/></linearGradient>` +
+    `<linearGradient id="komaGrad" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#F6ECD9"/><stop offset="1" stop-color="#E2C98E"/></linearGradient>` +
+    `</defs>`;
+  s += `<rect width="${size}" height="${size}" fill="url(#woodGrad)"/>`;
+  if (pos.last){
+    s += `<rect x="${m + pos.last.x*cell}" y="${m + pos.last.y*cell}" width="${cell}" height="${cell}" fill="#a13d2b" fill-opacity="0.24"/>`;
+  }
+  s += `<g stroke="#3E2A1B" stroke-opacity="0.72" stroke-width="1.3">`;
+  for (let i = 0; i <= 9; i++){
+    const p = m + i*cell;
+    s += `<line x1="${p}" y1="${m}" x2="${p}" y2="${m + cell*9}"/><line x1="${m}" y1="${p}" x2="${m + cell*9}" y2="${p}"/>`;
+  }
+  s += `</g>`;
+  s += `<rect x="${m}" y="${m}" width="${cell*9}" height="${cell*9}" fill="none" stroke="#3E2A1B" stroke-width="2.4"/>`;
+  [3, 6].forEach(a => [3, 6].forEach(b => {
+    s += `<circle cx="${m + a*cell}" cy="${m + b*cell}" r="3.2" fill="#3E2A1B"/>`;
+  }));
+  s += `<g font-size="14" fill="#6b5b3f" text-anchor="middle" font-family="Zen Kaku Gothic New, sans-serif">`;
+  for (let i = 0; i < 9; i++){
+    s += `<text x="${m + i*cell + cell/2}" y="${m - 10}">${FW[8 - i]}</text>`;
+    s += `<text x="${m + cell*9 + 16}" y="${m + i*cell + cell/2 + 5}">${KJ[i]}</text>`;
+  }
+  s += `</g>`;
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++){
+    const pc = pos.board[y][x];
+    if (pc) s += pieceSVG(pc, m + x*cell + cell/2, m + y*cell + cell/2, cell);
+  }
+  s += `</svg>`;
+  $('boardWrap').innerHTML = s;
+
+  $('handTop').innerHTML = handHTML(1, pos.hands[1]);
+  $('handBottom').innerHTML = handHTML(0, pos.hands[0]);
+
+  if (step === 0){
+    $('nowText').textContent = "対局開始前（平手）";
+    $('capsText').textContent = "次の手番：先手（▲）";
+  } else {
+    $('nowText').textContent = step + "手目　" + LABELS[step - 1];
+    $('capsText').textContent = step < game.moves.length
+      ? "次の手番：" + (step % 2 === 0 ? "先手（▲）" : "後手（△）")
+      : "棋譜の最後です";
+  }
+  const c = game.comments && game.comments[step];
+  $('commentText').textContent = c || (step === 0 ? "▶ を押すと一手ずつ進みます。" : "この手へのコメントはありません。");
+  $('commentText').className = "comment" + (c ? "" : " empty");
+
+  $('slider').value = step;
+  $('btnFirst').disabled = $('btnPrev').disabled = step === 0;
+  $('btnNext').disabled = $('btnLast').disabled = step === game.moves.length;
+  document.querySelectorAll('.mv').forEach(el => el.classList.toggle('active', +el.dataset.n === step));
+}
+
+function go(n){ step = Math.max(0, Math.min(game.moves.length, n)); draw(); }
+
+/* init */
+document.title = game.title + " | 一手帳";
+$('gameTitle').textContent = game.title;
+$('gameMeta').innerHTML =
+  `<span>日付：<b>${game.date}</b></span><span>平手</span><span>先手：<b>${game.black}</b></span><span>後手：<b>${game.white}</b></span><span>${game.moves.length}手</span><span>結果：<b>${game.result}</b></span>`;
+$('slider').max = game.moves.length;
+$('sliderMax').textContent = game.moves.length;
+
+game.moves.forEach((tok, i) => {
+  const b = document.createElement('button');
+  b.className = 'mv ' + (i % 2 === 0 ? 'b' : 'w');
+  b.dataset.n = i + 1;
+  b.textContent = (i + 1) + " " + LABELS[i];
+  b.addEventListener('click', () => go(i + 1));
+  $('moveList').appendChild(b);
+});
+
+const here = location.pathname.split('/').pop();
+OTHERS.forEach(g => {
+  const a = document.createElement('a');
+  a.className = 'other' + (g.href === here ? ' now-playing' : '');
+  a.href = g.href;
+  a.innerHTML = `<b>${g.title}</b><span>${g.date}・${g.moves}手</span>`;
+  $('otherList').appendChild(a);
+});
+
+$('btnFirst').addEventListener('click', () => go(0));
+$('btnPrev').addEventListener('click', () => go(step - 1));
+$('btnNext').addEventListener('click', () => go(step + 1));
+$('btnLast').addEventListener('click', () => go(game.moves.length));
+$('slider').addEventListener('input', e => go(+e.target.value));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type === 'range') return;
+  if (e.key === 'ArrowRight') go(step + 1);
+  else if (e.key === 'ArrowLeft') go(step - 1);
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(game.moves.length);
+});
+
+draw();
+</script>
+
+</body>
+</html>
